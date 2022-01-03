@@ -30,12 +30,23 @@
 |
 
 ==============================
-scheduled_thread_pool_executor
+Scheduled Thread Pool Executor
 ==============================
 
 
-    Add a short description here!
+    Scheduled Thread Pool Executor implementation in python
 
+Makes use of delayed queue implementation to submit tasks to the thread pool.
+
+-----
+Usage
+-----
+
+.. code-block::
+
+    from scheduled_thread_pool_executor import ScheduledThreadPoolExecutor
+    scheduled_executor = ScheduledThreadPoolExecutor(max_workers=5)
+    scheduled_executor.schedule(task, initial_delay=0, period=5)  # where task is a callable
 
 A longer description of your project goes here...
 
