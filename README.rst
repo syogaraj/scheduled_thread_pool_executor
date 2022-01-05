@@ -10,9 +10,6 @@
     .. image:: https://img.shields.io/coveralls/github/<USER>/scheduled_thread_pool_executor/main.svg
         :alt: Coveralls
         :target: https://coveralls.io/r/<USER>/scheduled_thread_pool_executor
-    .. image:: https://img.shields.io/pypi/v/scheduled_thread_pool_executor.svg
-        :alt: PyPI-Server
-        :target: https://pypi.org/project/scheduled_thread_pool_executor/
     .. image:: https://img.shields.io/conda/vn/conda-forge/scheduled_thread_pool_executor.svg
         :alt: Conda-Forge
         :target: https://anaconda.org/conda-forge/scheduled_thread_pool_executor
@@ -26,7 +23,9 @@
 .. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
-
+.. image:: https://img.shields.io/pypi/v/scheduled_thread_pool_executor.svg
+    :alt: PyPI-Server
+    :target: https://pypi.org/project/scheduled_thread_pool_executor/
 |
 
 ==============================
