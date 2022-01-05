@@ -1,9 +1,8 @@
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
+from typing import Optional, Callable
 
 from delayedqueue import DelayedQueue
-
 from scheduled_thread_pool_executor.ScheduledTask import ScheduledTask
 
 
@@ -12,28 +11,39 @@ class ScheduledThreadPoolExecutor(ThreadPoolExecutor):
         super().__init__(max_workers=max_workers, thread_name_prefix=name)
         self._max_workers = max_workers
         self.queue = DelayedQueue()
-        self.workers = set()
         self.shutdown = False
 
-    def schedule(self, fn, initial_delay, period: int, *args, **kwargs):
+    def schedule_at_fixed_rate(self, fn: Callable, initial_delay: int, period: int, *args, **kwargs) -> bool:
         if self.shutdown:
             raise RuntimeError(f"cannot schedule new task after shutdown!")
-        task = ScheduledTask(fn, initial_delay, period, *args, **kwargs)
-        print(f"submitting {task!r}")
-        self.queue.put(task, initial_delay)
+        task = ScheduledTask(fn, initial_delay, period, *args, is_fixed_rate=True, executor_ctx=self, **kwargs)
+        return self._put(task, initial_delay)
 
-    def schedule_once(self, fn, initial_delay, *args, **kwargs):
-        task = ScheduledTask(fn, initial_delay, 0, *args, **kwargs)
-        return self.queue.put(task, initial_delay)
+    def schedule_at_fixed_delay(self, fn: Callable, initial_delay: int, period: int, *args, **kwargs) -> bool:
+        if self.shutdown:
+            raise RuntimeError(f"cannot schedule new task after shutdown!")
+        task = ScheduledTask(fn, initial_delay, period, *args, is_fixed_delay=True, executor_ctx=self, **kwargs)
+        return self._put(task, initial_delay)
+
+    def schedule(self, fn, initial_delay, *args, **kwargs) -> bool:
+        task = ScheduledTask(fn, initial_delay, 0, *args, executor_ctx=self, **kwargs)
+        return self._put(task, initial_delay)
+
+    def _put(self, task: ScheduledTask, delay: int) -> bool:
+        # Don't use this explicitly. Use schedule/schedule_at_fixed_delay/schedule_at_fixed_rate. Additionally, to be
+        # called by ScheduledTask only!
+        if not isinstance(task, ScheduledTask):
+            raise TypeError(f"Task `{task!r}` must be of type ScheduledTask")
+        if delay < 0:
+            raise ValueError(f"Delay `{delay}` must be a non-negative number")
+        print(f" enqueuing {task} with delay of {delay}")
+        return self.queue.put(task, delay)
 
     def __run(self):
         while not self.shutdown:
             try:
                 task: ScheduledTask = self.queue.get()
-                super().submit(task.runnable, *task.args, **task.kwargs)
-                if task.is_periodic:
-                    task.set_next_run()
-                    self.queue.put(task, task.period)
+                super().submit(task.run, *task.args, **task.kwargs)
             except Exception as e:
                 print(e)
 
