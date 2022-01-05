@@ -30,11 +30,15 @@ class ScheduledTask:
 
     @property
     def executor_ctx(self):
-        return self.kwargs['executor_ctx']
+        return self.kwargs['executor_ctx']  # pragma: no cover
 
     @property
     def exception_callback(self):
         return self.kwargs.get('on_exception_callback')
+
+    @property
+    def time_func(self):
+        return self.__time_func
 
     def __get_next_run(self) -> int:
         if not (self.at_fixed_rate or self.at_fixed_delay):
