@@ -26,7 +26,6 @@
 .. image:: https://img.shields.io/pypi/v/scheduled_thread_pool_executor.svg
     :alt: PyPI-Server
     :target: https://pypi.org/project/scheduled_thread_pool_executor/
-|
 
 ==============================
 Scheduled Thread Pool Executor
