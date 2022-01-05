@@ -17,21 +17,33 @@ class ScheduledTask:
         self.task_time = int(self.__time_func() * 1000) + (initial_delay * 1000)
 
     @property
-    def is_periodic(self) -> bool:
-        return self.period != 0
-
-    @property
     def is_initial_run(self) -> bool:
         return self.__is_initial
 
+    @property
+    def at_fixed_delay(self) -> bool:
+        return self.kwargs.get('is_fixed_delay', False)
+
+    @property
+    def at_fixed_rate(self) -> bool:
+        return self.kwargs.get('is_fixed_rate', False)
+
+    @property
+    def executor_ctx(self):
+        return self.kwargs['executor_ctx']
+
+    @property
+    def exception_callback(self):
+        return self.kwargs.get('on_exception_callback')
+
     def __get_next_run(self) -> int:
-        if not self.is_periodic:
+        if not (self.at_fixed_rate or self.at_fixed_delay):
             raise TypeError("`get_next_run` invoked in a non-repeatable task")
         return int(self.__time_func() * 1000) + self.period * 1000
 
-    def set_next_run(self) -> None:
+    def set_next_run(self, time_taken: float = 0) -> None:
         self.__is_initial = False
-        self.task_time = self.__get_next_run()
+        self.task_time = self.__get_next_run() - time_taken
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, ScheduledTask):
@@ -39,4 +51,25 @@ class ScheduledTask:
         return self.task_time < other.task_time
 
     def __repr__(self) -> str:
-        return f"""(Task: {self.runnable.__name__}, Initial Delay: {self.initial_delay} second(s), Periodic: {self.is_periodic} / {self.period} second(s), Next run: {time.ctime(self.task_time / 1000)}"""
+        return f"""(Task: {self.runnable.__name__}, Initial Delay: {self.initial_delay} second(s), Periodic: {self.period} second(s), Next run: {time.ctime(self.task_time / 1000)})"""
+
+    def run(self, *args, **kwargs):
+        st_time = time.time_ns()
+        try:
+            self.runnable(*self.args, **self.kwargs)
+        except Exception as e:
+            if self.exception_callback:
+                self.exception_callback(e, *self.args, **self.kwargs)
+        finally:
+            end_time = time.time_ns()
+            time_taken = (end_time - st_time) / 1000000  # in milliseconds
+            if self.at_fixed_rate:
+                self.set_next_run(time_taken)
+                next_delay = (self.period*1000 - time_taken) / 1000
+                if next_delay < 0 or self.task_time <= (self.__time_func()*1000):
+                    self.executor_ctx._put(self, 0)
+                else:
+                    self.executor_ctx._put(self, next_delay)
+            elif self.at_fixed_delay:
+                self.set_next_run()
+                self.executor_ctx._put(self, self.period)
