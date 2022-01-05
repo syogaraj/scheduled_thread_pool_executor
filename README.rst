@@ -45,9 +45,9 @@ Usage
 
     from scheduled_thread_pool_executor import ScheduledThreadPoolExecutor
     scheduled_executor = ScheduledThreadPoolExecutor(max_workers=5)
-    scheduled_executor.schedule(task, initial_delay=0, period=5)  # where task is a callable
-
-A longer description of your project goes here...
+    scheduled_executor.schedule(task, 0)  # equals to schedule once, where `task` is a callable
+    scheduled_executor.schedule_at_fixed_rate(task, 0, 5)  # schedule immediately and run periodically for every 5 secs
+    scheduled_executor.schedule_at_fixed_delay(task, 5, 10)  # schedule after 5secs (initial delay) and run periodically for every 10secs
 
 
 .. _pyscaffold-notes:
